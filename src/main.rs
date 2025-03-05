@@ -2,12 +2,10 @@ mod components;
 mod systems;
 
 use bevy::prelude::*;
-use bevy::window;
 use bevy::window::PrimaryWindow;
 use components::bird::*;
 use components::game_manager::*;
-use rand::rngs::ThreadRng;
-use rand::thread_rng;
+use rand::rng;
 use systems::bird_systems::*;
 use systems::obstacle_systems::*;
 
@@ -17,7 +15,7 @@ fn main() {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        title: String::from("Bevy Flappy The Bird"),
+                        title: String::from("Flappy the Bird"),
                         position: WindowPosition::Centered(MonitorSelection::Primary),
                         resolution: Vec2::new(512., 512.).into(),
                         ..Default::default()
@@ -27,7 +25,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
         )
         .add_systems(Startup, setup_level)
-        .add_systems(Update, update_bird)
+        .add_systems(Update, (update_bird, update_obstacle))
         .run();
 }
 
@@ -59,7 +57,7 @@ fn setup_level(
         Bird { velocity: 0.0 },
     ));
 
-    let mut rand = thread_rng();
+    let mut rand = rng();
 
     spawn_obstacles(&mut commands, &mut rand, window.width(), &pipe_image);
 }

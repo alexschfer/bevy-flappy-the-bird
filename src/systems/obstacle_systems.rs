@@ -1,17 +1,17 @@
-use bevy::{prelude::*, state::commands};
-use rand::{Rng, rngs::ThreadRng};
+use bevy::prelude::*;
+use rand::{Rng, rng, rngs::ThreadRng};
 
-use crate::components::obstacle::*;
+use crate::components::{game_manager::GameManager, obstacle::*};
 
-const PIXEL_RATIO: f32 = 4.0;
+pub const PIXEL_RATIO: f32 = 4.0;
 
-const OBSTACLE_AMOUNT: i32 = 5;
-const OBSTACLE_WIDTH: f32 = 32.;
-const OBSTACLE_HEIGHT: f32 = 144.;
-const OBSTACLE_VERTICAL_OFFSET: f32 = 30.;
-const OBSTACLE_GAP_SIZE: f32 = 15.;
-const OBSTACLE_SPACING: f32 = 60.;
-const OBSTACLE_SCROLL_SPEED: f32 = 150.;
+pub const OBSTACLE_AMOUNT: i32 = 5;
+pub const OBSTACLE_WIDTH: f32 = 32.;
+pub const OBSTACLE_HEIGHT: f32 = 144.;
+pub const OBSTACLE_VERTICAL_OFFSET: f32 = 30.;
+pub const OBSTACLE_GAP_SIZE: f32 = 15.;
+pub const OBSTACLE_SPACING: f32 = 60.;
+pub const OBSTACLE_SCROLL_SPEED: f32 = 150.;
 
 fn get_centered_pipe_position() -> f32 {
     return (OBSTACLE_HEIGHT / 2. + OBSTACLE_GAP_SIZE) * PIXEL_RATIO;
@@ -64,6 +64,27 @@ fn spawn_obstacle(
     ));
 }
 
+pub fn update_obstacle(
+    time: Res<Time>,
+    game_manager: Res<GameManager>,
+    mut obstacle_query: Query<(&mut Obstacle, &mut Transform)>,
+) {
+    let mut rand = rng();
+    let y_offset = generate_offset(&mut rand);
+
+    for (obstacle, mut transform) in obstacle_query.iter_mut() {
+        transform.translation.x -= time.delta_secs() * OBSTACLE_SCROLL_SPEED;
+
+        if transform.translation.x + OBSTACLE_WIDTH * PIXEL_RATIO / 2.
+            < -game_manager.window_dimensions.x / 2.
+        {
+            transform.translation.x += OBSTACLE_AMOUNT as f32 * OBSTACLE_SPACING * PIXEL_RATIO;
+            transform.translation.y =
+                get_centered_pipe_position() * obstacle.pipe_direction + y_offset;
+        }
+    }
+}
+
 fn generate_offset(rand: &mut ThreadRng) -> f32 {
-    return rand.gen_range(-OBSTACLE_VERTICAL_OFFSET..OBSTACLE_VERTICAL_OFFSET) * PIXEL_RATIO;
+    return rand.random_range(-OBSTACLE_VERTICAL_OFFSET..OBSTACLE_VERTICAL_OFFSET) * PIXEL_RATIO;
 }
